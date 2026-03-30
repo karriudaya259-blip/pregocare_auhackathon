@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Pregnancy Health Monitor</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h2>🤰 Pregnancy Health Monitor</h2>
+            <div class="nav-links">
+                <span id="user-name"></span>
+                <button onclick="logout()" class="btn-logout">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <!-- Welcome Card -->
+        <div class="welcome-card">
+            <h3>Welcome, <span id="welcome-name"></span>!</h3>
+            <p>Pregnancy Month: <strong id="pregnancy-month"></strong> | Location: <strong id="user-location"></strong></p>
+        </div>
+
+        <!-- Hydration Reminder -->
+        <div class="card reminder-card">
+            <h2>💧 Hydration Reminder</h2>
+            <div class="reminder-controls">
+                <label class="switch">
+                    <input type="checkbox" id="reminder-toggle">
+                    <span class="slider"></span>
+                </label>
+                <span>Enable hourly hydration reminders</span>
+            </div>
+            <div id="reminder-status" class="reminder-status"></div>
+        </div>
+
+        <!-- Symptom Checker -->
+        <div class="card">
+            <h2>🤔 AI Symptom Checker</h2>
+            <p>Select symptoms you're experiencing (based on pregnancy month)</p>
+            
+            <div class="symptom-grid" id="symptom-list">
+                <!-- Symptoms will be loaded dynamically -->
+            </div>
+            
+            <button onclick="analyzeSymptoms()" class="btn-primary">🔍 Analyze Symptoms</button>
+            <div id="symptom-result" class="result"></div>
+        </div>
+
+        <!-- Baby Kick Tracker -->
+        <div class="card">
+            <h2>👶 Baby Kick Tracker</h2>
+            <p>Track fetal movements - Count kicks in last hour</p>
+            <div class="input-group">
+                <input type="number" id="kicks" placeholder="Enter number of movements" min="0">
+                <button onclick="checkKicks()" class="btn-secondary">📊 Check Movement</button>
+            </div>
+            <div id="kickResult" class="result"></div>
+            <p class="info-text">💡 Normal: 10+ movements in 2 hours. Less than 5 in 1 hour needs attention.</p>
+        </div>
+
+        <!-- Pregnancy Tips -->
+        <div class="card tips-card">
+            <h2>💡 Pregnancy Tips for Month <span id="tip-month"></span></h2>
+            <div id="pregnancy-tips"></div>
+        </div>
+
+        <!-- Emergency Info -->
+        <div class="card emergency-info">
+            <h2>🚨 Emergency Contacts</h2>
+            <p><strong>Emergency:</strong> Call 102 (India) or your local emergency number</p>
+            <p><strong>Doctor's On-Call:</strong> Contact your healthcare provider immediately</p>
+            <p><strong>Labor & Delivery:</strong> Go to nearest hospital if experiencing urgent symptoms</p>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
