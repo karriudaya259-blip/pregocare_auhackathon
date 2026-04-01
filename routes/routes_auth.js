@@ -4,115 +4,81 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const { protect } = require('../middleware/auth');
 
-// Generate JWT Token
+// Generate JWT
 const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRE
-    });
+    return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
 
-// @route   POST /api/auth/register
-// @desc    Register user
+// Register
 router.post('/register', async (req, res) => {
     try {
         const { name, aadhar, location, phone, pregnancyMonth, email, password } = req.body;
 
-        // Check if user exists
         const userExists = await User.findOne({ $or: [{ email }, { aadhar }] });
         if (userExists) {
             return res.status(400).json({ success: false, message: 'User already exists' });
         }
 
-        // Create user
         const user = await User.create({
-            name,
-            aadhar,
-            location,
-            phone,
-            pregnancyMonth,
-            email,
-            password
+            name, aadhar, location, phone, pregnancyMonth, email, password
         });
 
-        sendTokenResponse(user, 201, res);
+        res.status(201).json({
+            success: true,
+            token: generateToken(user._id),
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                aadhar: user.aadhar,
+                location: user.location,
+                phone: user.phone,
+                pregnancyMonth: user.pregnancyMonth
+            }
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 
-// @route   POST /api/auth/login
-// @desc    Login user
+// Login
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Validate email & password
-        if (!email || !password) {
-            return res.status(400).json({ success: false, message: 'Please provide email and password' });
-        }
-
-        // Check for user
         const user = await User.findOne({ email }).select('+password');
         if (!user) {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
 
-        // Check password
         const isMatch = await user.matchPassword(password);
         if (!isMatch) {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
 
-        sendTokenResponse(user, 200, res);
+        res.json({
+            success: true,
+            token: generateToken(user._id),
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                aadhar: user.aadhar,
+                location: user.location,
+                phone: user.phone,
+                pregnancyMonth: user.pregnancyMonth
+            }
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 
-// @route   GET /api/auth/me
-// @desc    Get current logged in user
+// Get current user
 router.get('/me', protect, async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id);
-        res.status(200).json({ success: true, data: user });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
+    res.json({ success: true, data: req.user });
 });
-
-// @route   PUT /api/auth/updatereminder
-// @desc    Update hydration reminder setting
-router.put('/updatereminder', protect, async (req, res) => {
-    try {
-        const user = await User.findByIdAndUpdate(
-            req.user.id,
-            { hydrationReminder: req.body.hydrationReminder },
-            { new: true, runValidators: true }
-        );
-        res.status(200).json({ success: true, data: user });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-
-const sendTokenResponse = (user, statusCode, res) => {
-    const token = generateToken(user._id);
-    res.status(statusCode).json({
-        success: true,
-        token,
-        user: {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            aadhar: user.aadhar,
-            location: user.location,
-            phone: user.phone,
-            pregnancyMonth: user.pregnancyMonth,
-            hydrationReminder: user.hydrationReminder
-        }
-    });
-};
 
 module.exports = router;
