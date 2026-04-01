@@ -1,26 +1,84 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const express = require('express');
+const router = express.Router();
+const User = require('../models/User');
+const jwt = require('jsonwebtoken');
+const { protect } = require('../middleware/auth');
 
-const UserSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    aadhar: { type: String, required: true, unique: true },
-    location: { type: String, required: true },
-    phone: { type: String, required: true },
-    pregnancyMonth: { type: Number, required: true, min: 1, max: 9 },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true, select: false },
-    createdAt: { type: Date, default: Date.now }
-});
-
-UserSchema.pre('save', async function(next) {
-    if (!this.isModified('password')) return next();
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-});
-
-UserSchema.methods.matchPassword = async function(password) {
-    return await bcrypt.compare(password, this.password);
+// Generate JWT
+const generateToken = (id) => {
+    return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
 
-module.exports = mongoose.model('User', UserSchema);
+// Register
+router.post('/register', async (req, res) => {
+    try {
+        const { name, aadhar, location, phone, pregnancyMonth, email, password } = req.body;
+
+        const userExists = await User.findOne({ $or: [{ email }, { aadhar }] });
+        if (userExists) {
+            return res.status(400).json({ success: false, message: 'User already exists' });
+        }
+
+        const user = await User.create({
+            name, aadhar, location, phone, pregnancyMonth, email, password
+        });
+
+        res.status(201).json({
+            success: true,
+            token: generateToken(user._id),
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                aadhar: user.aadhar,
+                location: user.location,
+                phone: user.phone,
+                pregnancyMonth: user.pregnancyMonth
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// Login
+router.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        const user = await User.findOne({ email }).select('+password');
+        if (!user) {
+            return res.status(401).json({ success: false, message: 'Invalid credentials' });
+        }
+
+        const isMatch = await user.matchPassword(password);
+        if (!isMatch) {
+            return res.status(401).json({ success: false, message: 'Invalid credentials' });
+        }
+
+        res.json({
+            success: true,
+            token: generateToken(user._id),
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                aadhar: user.aadhar,
+                location: user.location,
+                phone: user.phone,
+                pregnancyMonth: user.pregnancyMonth
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// Get current user
+router.get('/me', protect, async (req, res) => {
+    res.json({ success: true, data: req.user });
+});
+
+module.exports = router;
