@@ -1,7 +1,7 @@
 {
-  "name": "pregnancy-health-app",
+  "name": "pregnancy-health-backend",
   "version": "1.0.0",
-  "description": "AI Pregnancy Health Monitoring System",
+  "description": "Backend API for Pregnancy Health Monitor",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
